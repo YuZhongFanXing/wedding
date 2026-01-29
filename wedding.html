@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>新婚快乐</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+        #final-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            color: #FFB6C1;
+            font-size: 3rem;
+            text-shadow: 0 0 20px #FF69B4, 0 0 40px #FF69B4;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 4s ease-in-out; /* 改为4秒 */
+            pointer-events: none;
+            white-space: nowrap;
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+        #final-text.show {
+            opacity: 1;
+        }
+        #final-heart-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 12;
+            color: #FFB6C1;
+            font-size: 4rem;
+            text-shadow: 0 0 20px #FF69B4, 0 0 40px #FF69B4, 0 0 60px #FF69B4;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 4s ease-in-out; /* 改为4秒 */
+            pointer-events: none;
+            white-space: nowrap;
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+        #final-heart-text.show {
+            opacity: 1;
+        }
+        .blessing {
+            position: absolute;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            z-index: 20;
+            animation: float-up 16s ease-out forwards; /* 改为16秒 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            font-family: 'Ma Shan Zheng', sans-serif;
+        }
+        @keyframes float-up {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            90% {
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(-400px) scale(0.8);
+                opacity: 0;
+            }
+        }
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            z-index: 15;
+        }
+        @keyframes firework-explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+        .heart {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            opacity: 0;
+            animation: float-heart 20s ease-out forwards; /* 改为20秒 */
+            z-index: 21;
+        }
+        .heart::before,
+        .heart::after {
+            content: "";
+            position: absolute;
+            left: 10px;
+            top: 0;
+            width: 10px;
+            height: 16px;
+            background: #ff4757;
+            border-radius: 10px 10px 0 0;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+        }
+        .heart::after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+        @keyframes float-heart {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-500px) scale(1.2);
+                opacity: 0;
+            }
+        }
+        .heart-firework {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            z-index: 16;
+            opacity: 0;
+        }
+        .heart-firework::before,
+        .heart-firework::after {
+            content: "";
+            position: absolute;
+            left: 2.5px;
+            top: 0;
+            width: 2.5px;
+            height: 4px;
+            background: #ff4757;
+            border-radius: 2.5px 2.5px 0 0;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+        }
+        .heart-firework::after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+        @keyframes heart-firework-explode {
+            0% {
+                transform: translate(0, 0) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="final-text">祝姐姐姐夫新婚快乐，永浴爱河！</div>
+    <div id="final-heart-text">胡佳伟 ❤ 侯香</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// 星云粒子系统
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const particlesGeometry = new THREE.BufferGeometry();
+const particleCount = 15000;
+const posArray = new Float32Array(particleCount * 3);
+const colorArray = new Float32Array(particleCount * 3);
+const initialPositions = [];
+
+for(let i = 0; i < particleCount * 3; i += 3) {
+    posArray[i] = (Math.random() - 0.5) * 20;
+    posArray[i+1] = (Math.random() - 0.5) * 20;
+    posArray[i+2] = (Math.random() - 0.5) * 8;
+    initialPositions.push(posArray[i], posArray[i+1], posArray[i+2]);
+    colorArray[i] = 0.8 + Math.random() * 0.2;
+    colorArray[i+1] = 0.8 + Math.random() * 0.2;
+    colorArray[i+2] = 0.8 + Math.random() * 0.2;
+}
+particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+
+const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.035,
+    vertexColors: true,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    color: 0xFF69B4
+});
+const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(particlesMesh);
+camera.position.z = 8;
+
+const words = ["祝", "姐", "姐","和", "姐", "夫", "新", "婚", "快", "乐"];
+let currentWordIndex = 0;
+let targetPositions = [];
+let isAnimating = false;
+let animationProgress = 0;
+let animationState = "aggregating";
+let allWordsComplete = false;
+
+// 新增变量
+let finalTextShown = false;
+let finalTextTimer = null;
+let finalHeartTextTimer = null;
+
+function createTextPositions(text) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 2400;
+    canvas.height = 1200;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 800px "Ma Shan Zheng", "SimHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, canvas.width/2, canvas.height/2);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const textPixels = [];
+    let step = 3;
+
+    for (let y = 0; y < canvas.height; y += step) {
+        for (let x = 0; x < canvas.width; x += step) {
+            if (data[(y * canvas.width + x) * 4 + 3] > 200) {
+                textPixels.push({ x, y });
+            }
+        }
+    }
+
+    if (textPixels.length < particleCount / 2) {
+        textPixels.length = 0;
+        step = 2;
+        for (let y = 0; y < canvas.height; y += step) {
+            for (let x = 0; x < canvas.width; x += step) {
+                if (data[(y * canvas.width + x) * 4 + 3] > 200) {
+                    textPixels.push({ x, y });
+                }
+            }
+        }
+    }
+
+    const selectedPixels = [];
+    const pixelsCopy = [...textPixels];
+    for (let i = 0; i < particleCount && pixelsCopy.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * pixelsCopy.length);
+        selectedPixels.push(pixelsCopy[randomIndex]);
+        pixelsCopy.splice(randomIndex, 1);
+        if (pixelsCopy.length === 0 && i < particleCount - 1) {
+            pixelsCopy.push(...textPixels);
+        }
+    }
+
+    const positions = [];
+    for (let i = 0; i < selectedPixels.length; i++) {
+        const pixel = selectedPixels[i];
+        const scale = 0.0055;
+        positions.push(
+            (pixel.x - canvas.width / 2) * scale,
+            -(pixel.y - canvas.height / 2) * scale,
+            (Math.random() - 0.5) * 0.3
+        );
+    }
+    return positions;
+}
+
+function startTextAnimation() {
+    isAnimating = true;
+    animationState = "aggregating";
+    animationProgress = 0;
+    targetPositions = createTextPositions(words[currentWordIndex]);
+}
+
+function animateParticles() {
+    if (!isAnimating || allWordsComplete) return;
+
+    if (animationState === "aggregating") {
+        animationProgress += 0.0125; // 减半：0.025 → 0.0125
+        if (animationProgress >= 1) {
+            animationProgress = 1;
+            animationState = "holding";
+            setTimeout(() => { animationState = "dispersing"; }, 200); // 加倍：100 → 200
+        }
+    } else if (animationState === "dispersing") {
+        animationProgress -= 0.0075; // 减半：0.015 → 0.0075
+        if (animationProgress <= 0) {
+            animationProgress = 0;
+            isAnimating = false;
+            currentWordIndex++;
+            if (currentWordIndex >= words.length) {
+                allWordsComplete = true;
+                setTimeout(() => {
+                    document.getElementById('final-text').classList.add('show');
+                    startFireworks();
+                    startBlessings();
+                    startHearts();
+                    
+                    // 新增：3秒后开始最终文字的粒子消散和新文字显示
+                    finalTextTimer = setTimeout(() => {
+                        finalTextShown = true;
+                        document.getElementById('final-text').classList.remove('show');
+                        startFinalTextDisappear();
+                    }, 6000); // 加倍：3000 → 6000
+                }, 1000); // 加倍：500 → 1000
+            } else {
+                setTimeout(startTextAnimation, 200); // 加倍：100 → 200
+            }
+        }
+    }
+
+    const positions = particlesGeometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+        const easedProgress = easeInOutQuart(animationProgress);
+        const targetX = targetPositions[i] || 0;
+        const targetY = targetPositions[i+1] || 0;
+        const targetZ = targetPositions[i+2] || 0;
+        const startX = initialPositions[i];
+        const startY = initialPositions[i+1];
+        const startZ = initialPositions[i+2];
+        const dx = targetX - startX;
+        const dy = targetY - startY;
+        const dz = targetZ - startZ;
+
+        const spiralAngle = (1 - easedProgress) * Math.PI * 4 + i * 0.1;
+        const spiralRadius = Math.sqrt(dx*dx + dy*dy) * (1 - easedProgress) * 0.6;
+        positions[i] = startX + dx * easedProgress + Math.cos(spiralAngle) * spiralRadius;
+        positions[i+1] = startY + dy * easedProgress + Math.sin(spiralAngle) * spiralRadius + (1 - easedProgress) * -8;
+        positions[i+2] = startZ + dz * easedProgress;
+    }
+    particlesGeometry.attributes.position.needsUpdate = true;
+}
+
+// 新增：最终文字粒子消散函数
+function startFinalTextDisappear() {
+    // 创建最终文字"祝姐姐和姐夫新婚快乐，永浴爱河！"的粒子位置
+    const finalTextPositions = createTextPositions("祝姐姐姐夫新婚快乐，永浴爱河！");
+    
+    // 设置粒子从当前位置（最终文字形状）向四周扩散消失
+    for (let i = 0; i < initialPositions.length; i += 3) {
+        // 为每个粒子设置一个随机的最终位置（远离中心）
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 30 + Math.random() * 20;
+        initialPositions[i] = Math.cos(angle) * distance;
+        initialPositions[i+1] = Math.sin(angle) * distance;
+        initialPositions[i+2] = (Math.random() - 0.5) * 20;
+    }
+    
+    // 开始消散动画
+    targetPositions = initialPositions.slice();
+    isAnimating = true;
+    animationState = "aggregating";
+    animationProgress = 0;
+    
+    // 动画完成后显示新的爱心文字
+    setTimeout(() => {
+        isAnimating = false;
+        
+        // 延迟显示"胡佳伟 ❤ 侯香"
+        finalHeartTextTimer = setTimeout(() => {
+            document.getElementById('final-heart-text').classList.add('show');
+            startHeartFireworks(); // 开始爱心型烟花
+        }, 1000); // 加倍：500 → 1000
+    }, 4000); // 加倍：2000 → 4000
+}
+
+function easeInOutQuart(t) {
+    return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+}
+
+function createFirework(x, y) {
+    const colors = ['#FF1461', '#18FF92', '#5A87FF', '#FBF38C', '#FF69B4', '#00CED1'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'firework';
+        particle.style.background = color;
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.boxShadow = `0 0 10px ${color}`;
+        const angle = (Math.PI * 2 * i) / 30;
+        const velocity = 100 + Math.random() * 100;
+        const tx = Math.cos(angle) * velocity;
+        const ty = Math.sin(angle) * velocity;
+        particle.style.animation = 'firework-explode 2s ease-out forwards'; // 加倍：1秒 → 2秒
+        particle.style.transform = `translate(${tx}px, ${ty}px) scale(${Math.random() + 0.5})`;
+        document.body.appendChild(particle);
+        setTimeout(() => particle.remove(), 2000); // 加倍：1000 → 2000
+    }
+}
+
+// 新增：创建爱心型烟花
+function createHeartFirework(x, y) {
+    const colors = ['#FF1461', '#FF69B4', '#FFB6C1', '#FF4757', '#FF6B8B', '#FF1493'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const heartCount = 40; // 爱心数量
+    
+    for (let i = 0; i < heartCount; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'heart-firework';
+        heart.style.background = color;
+        heart.style.left = x + 'px';
+        heart.style.top = y + 'px';
+        heart.style.boxShadow = `0 0 10px ${color}`;
+        
+        // 使用爱心形状的参数方程
+        const t = (Math.PI * 2 * i) / heartCount;
+        const scale = 15;
+        // 爱心参数方程
+        const heartX = 16 * Math.pow(Math.sin(t), 3);
+        const heartY = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+        
+        const tx = heartX * scale;
+        const ty = -heartY * scale; // 注意：屏幕坐标系中Y轴向下，所以取负
+        
+        heart.style.animation = 'heart-firework-explode 4s ease-out forwards'; // 加倍：2秒 → 4秒
+        heart.style.transform = `translate(${tx}px, ${ty}px) scale(${0.5 + Math.random() * 0.5})`;
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 4000); // 加倍：2000 → 4000
+    }
+}
+
+function startFireworks() {
+    setInterval(() => {
+        createFirework(Math.random() * window.innerWidth, Math.random() * window.innerHeight * 0.7);
+    }, 1600); // 加倍：800 → 1600
+}
+
+// 新增：开始爱心型烟花
+function startHeartFireworks() {
+    // 先清除之前的烟花
+    clearAllFireworks();
+    
+    // 开始爱心型烟花，更密集
+    setInterval(() => {
+        createHeartFirework(
+            Math.random() * window.innerWidth, 
+            Math.random() * window.innerHeight * 0.7
+        );
+    }, 600); // 加倍：300 → 600
+    
+    // 在文字周围也放一些烟花
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    
+    // 在文字周围创建一圈爱心烟花
+    for (let i = 0; i < 8; i++) {
+        setTimeout(() => {
+            const angle = (Math.PI * 2 * i) / 8;
+            const radius = 200;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            createHeartFirework(x, y);
+        }, i * 400); // 加倍：200 → 400
+    }
+}
+
+// 新增：清除所有烟花
+function clearAllFireworks() {
+    const fireworks = document.querySelectorAll('.firework, .heart-firework');
+    fireworks.forEach(firework => {
+        firework.remove();
+    });
+}
+
+const blessings = [
+    '新婚快乐', '永结同心',  '百年好合', '永浴爱河', '白头偕老', '相敬如宾', '爱情甜蜜', '天作之合', '佳偶天成', '心心相印', '情投意合', '比翼双飞', '郎才女貌', '才子佳人', '花好月圆', '福禄鸳鸯', '天缘巧合', '美满良缘', '珠联璧合'
+];
+const blessingColors = [
+    '#FFE4E1', '#FFB6C1', '#FFA07A', '#98FB98', '#87CEEB', '#DDA0DD', '#F0E68C', '#E0FFFF', '#FFE4B5', '#FFC0CB'
+];
+
+function createBlessing() {
+    const blessing = document.createElement('div');
+    blessing.className = 'blessing';
+    blessing.textContent = blessings[Math.floor(Math.random() * blessings.length)];
+    blessing.style.background = blessingColors[Math.floor(Math.random() * blessingColors.length)];
+    blessing.style.left = (Math.random() * (window.innerWidth - 200)) + 'px';
+    blessing.style.bottom = '0px';
+    document.body.appendChild(blessing);
+    setTimeout(() => blessing.remove(), 16000); // 加倍：8000 → 16000
+}
+
+function startBlessings() {
+    setInterval(createBlessing, 500); // 加倍：250 → 500
+}
+
+function createHeart() {
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.style.left = Math.random() * window.innerWidth + 'px';
+    heart.style.bottom = '-30px';
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 20000); // 加倍：10000 → 20000
+}
+
+function startHearts() {
+    setInterval(createHeart, 800); // 加倍：400 → 800
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    animateParticles();
+
+    if (allWordsComplete || (!isAnimating && animationProgress === 0)) {
+        const positions = particlesGeometry.attributes.position.array;
+        for(let i = 0; i < positions.length; i += 3) {
+            positions[i] += Math.sin(Date.now() * 0.00015 + i) * 0.001; // 减半：0.0003 → 0.00015, 0.002 → 0.001
+            positions[i+1] += Math.cos(Date.now() * 0.0002 + i) * 0.001; // 减半：0.0004 → 0.0002, 0.002 → 0.001
+        }
+        particlesGeometry.attributes.position.needsUpdate = true;
+    }
+
+    if (!allWordsComplete) {
+        particlesMesh.rotation.z = Math.sin(Date.now() * 0.00005) * 0.01; // 减半：0.0001 → 0.00005, 0.02 → 0.01
+    }
+
+    renderer.render(scene, camera);
+}
+animate();
+setTimeout(startTextAnimation, 2000); // 加倍：1000 → 2000
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const bgGradient = document.createElement('div');
+bgGradient.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 50%, #FF149330, #000000);
+    pointer-events: none; z-index: -1;
+`;
+document.body.appendChild(bgGradient);
+
+// 清理定时器
+window.addEventListener('beforeunload', () => {
+    if (finalTextTimer) clearTimeout(finalTextTimer);
+    if (finalHeartTextTimer) clearTimeout(finalHeartTextTimer);
+});
+
+</script>
+</body>
+</html>
